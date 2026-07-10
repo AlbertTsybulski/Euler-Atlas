@@ -1,6 +1,4 @@
 import { createApp } from 'vue'
-import { Analytics } from "@vercel/analytics/vue"
-import { SpeedInsights } from "@vercel/speed-insights/vue"
 import 'mathlive'
 import 'katex/dist/katex.min.css'
 import App from './App.vue'

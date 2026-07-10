@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "katex": "^0.17.0",
     "mathjs": "^15.2.0",
     "mathlive": "^0.110.0",

@@ -19,7 +19,19 @@ if (mathVirtualKeyboard) {
 			rows: [
 				['x', 'y', 'e', '\\pi', '[separator]', '+', '-', '\\times', '/', '=', '[separator]', '(', ')'],
 				['\\frac{#@}{#0}', '\\sqrt{#0}', '#@^{#?}', '[separator]', '\\sin', '\\cos', '\\tan', '\\exp'],
-				['\\log', '\\ln', '\\abs{#0}', '[separator]', '[left]', '[right]', '[backspace]', '[hide-keyboard]'],
+				[
+					'\\log',
+					'\\ln',
+					{
+						latex: '\\left| #0 \\right|',
+						insert: '\\abs{#0}',
+					},
+					'[separator]',
+					'[left]',
+					'[right]',
+					'[backspace]',
+					'[hide-keyboard]',
+				],
 				['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
 			],
 		},

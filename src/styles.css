@@ -357,6 +357,10 @@ button {
   font-size: 1.15rem;
 }
 
+.math-input::part(menu-toggle) {
+  display: none;
+}
+
 .field input {
   width: 100%;
   min-height: 52px;

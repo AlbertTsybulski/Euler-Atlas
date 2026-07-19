@@ -340,7 +340,10 @@ export function toLatex(expression: string): string {
   return parsed.toTex({ parenthesis: 'keep' })
 }
 
-export function computeEulerSteps(
+export type EstimationMethod = 'euler' | 'improved_euler' | 'midpoint' | 'rk4'
+
+export function computeSteps(
+  method: EstimationMethod,
   evaluator: (x: number, y: number) => number,
   x0: number,
   y0: number,
@@ -360,7 +363,27 @@ export function computeEulerSteps(
   let y = y0
 
   for (let index = 0; index < steps; index += 1) {
-    const slope = evaluator(x, y)
+    let slope = 0
+    if (method === 'euler') {
+      slope = evaluator(x, y)
+    } else if (method === 'improved_euler') {
+      const k1 = evaluator(x, y)
+      const yPred = y + stepSize * k1
+      const k2 = evaluator(x + stepSize, yPred)
+      slope = (k1 + k2) / 2
+    } else if (method === 'midpoint') {
+      const k1 = evaluator(x, y)
+      const yMid = y + (stepSize / 2) * k1
+      const k2 = evaluator(x + stepSize / 2, yMid)
+      slope = k2
+    } else if (method === 'rk4') {
+      const k1 = evaluator(x, y)
+      const k2 = evaluator(x + stepSize / 2, y + (stepSize / 2) * k1)
+      const k3 = evaluator(x + stepSize / 2, y + (stepSize / 2) * k2)
+      const k4 = evaluator(x + stepSize, y + stepSize * k3)
+      slope = (k1 + 2 * k2 + 2 * k3 + k4) / 6
+    }
+
     const deltaY = stepSize * slope
     const nextX = x + stepSize
     const nextY = y + deltaY
@@ -380,6 +403,16 @@ export function computeEulerSteps(
   }
 
   return result
+}
+
+export function computeEulerSteps(
+  evaluator: (x: number, y: number) => number,
+  x0: number,
+  y0: number,
+  stepSize: number,
+  steps: number,
+): EulerStep[] {
+  return computeSteps('euler', evaluator, x0, y0, stepSize, steps)
 }
 
 export function deriveBounds(points: Array<{ x: number; y: number }>, padding = 0.18): Bounds {

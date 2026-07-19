@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { renderToString } from 'katex'
 import {
   buildSlopeField,
-  computeEulerSteps,
+  computeSteps,
   createEvaluator,
   deriveBounds,
   formatNumber,
@@ -12,6 +12,7 @@ import {
   type Bounds,
   type EulerStep,
   type FieldSegment,
+  type EstimationMethod,
 } from './lib/euler'
 
 type Example = {
@@ -71,6 +72,15 @@ const steps = ref(examples[0].steps)
 const xFinal = ref(examples[0].xFinal)
 const mathFieldElement = ref<HTMLElement & { value: string } | null>(null)
 
+const selectedMethod = ref<EstimationMethod>('euler')
+
+const methods = [
+  { id: 'euler', label: 'Euler', formulaHeader: 'f(x_n, y_n)' },
+  { id: 'improved_euler', label: 'Improved Euler', formulaHeader: 'k_{\\text{avg}}' },
+  { id: 'midpoint', label: 'Midpoint', formulaHeader: 'f(x_n + \\frac{h}{2}, y_{\\text{mid}})' },
+  { id: 'rk4', label: 'RK4', formulaHeader: 'k_{\\text{avg}}' },
+] as const
+
 function renderMath(latex: string): string {
   return renderToString(latex, { throwOnError: false })
 }
@@ -105,7 +115,7 @@ const stepData = computed<EulerStep[]>(() => {
   }
 
   try {
-    return computeEulerSteps(evaluatorResult.value.evaluator, x0.value, y0.value, stepSize.value, steps.value)
+    return computeSteps(selectedMethod.value, evaluatorResult.value.evaluator, x0.value, y0.value, stepSize.value, steps.value)
   } catch {
     return []
   }
@@ -188,7 +198,7 @@ const currentSlope = computed(() => {
 
 const hasRenderableSteps = computed(() => !evaluatorResult.value.error && stepData.value.length > 0)
 
-const plotKey = computed(() => `${equation.value}|${x0.value}|${xFinal.value}|${y0.value}|${stepSize.value}|${steps.value}`)
+const plotKey = computed(() => `${selectedMethod.value}|${equation.value}|${x0.value}|${xFinal.value}|${y0.value}|${stepSize.value}|${steps.value}`)
 
 function syncStepSizeFromFinalX(): void {
   const span = xFinal.value - x0.value
@@ -379,6 +389,22 @@ watch(
             </div>
           </div>
 
+          <div class="field method-field">
+            <span>Estimation Method</span>
+            <div class="method-grid" role="radiogroup" aria-label="Estimation method">
+              <button
+                v-for="m in methods"
+                :key="m.id"
+                type="button"
+                class="method-btn"
+                :class="{ active: selectedMethod === m.id }"
+                @click="selectedMethod = m.id"
+              >
+                {{ m.label }}
+              </button>
+            </div>
+          </div>
+
           <div class="field-grid">
             <label class="field">
               <span>x0</span>
@@ -541,7 +567,7 @@ watch(
                 <th v-html="renderMath('n')"></th>
                 <th v-html="renderMath('x_n')"></th>
                 <th v-html="renderMath('y_n')"></th>
-                <th v-html="renderMath('f(x_n, y_n)')"></th>
+                <th v-html="renderMath(methods.find((m) => m.id === selectedMethod)?.formulaHeader || 'f(x_n, y_n)')"></th>
                 <th v-html="renderMath('\\Delta y')"></th>
                 <th v-html="renderMath('x_{n+1}')"></th>
                 <th v-html="renderMath('y_{n+1}')"></th>

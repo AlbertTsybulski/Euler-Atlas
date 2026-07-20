@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { renderToString } from 'katex'
 import {
   buildSlopeField,
@@ -211,7 +211,7 @@ function syncStepSizeFromFinalX(): void {
 
 watch([x0, xFinal, steps], syncStepSizeFromFinalX, { immediate: true })
 
-function loadExample(index: number): void {
+async function loadExample(index: number): Promise<void> {
   const example = examples[index]
   activeExample.value = example.id
   equation.value = example.expression
@@ -220,10 +220,18 @@ function loadExample(index: number): void {
   stepSize.value = example.stepSize
   steps.value = example.steps
   xFinal.value = example.xFinal
+  await nextTick()
+  if (mathFieldElement.value) {
+    mathFieldElement.value.value = equation.value
+  }
 }
 
-function selectCustomEquation(): void {
+async function selectCustomEquation(): Promise<void> {
   activeExample.value = 'custom'
+  await nextTick()
+  if (mathFieldElement.value) {
+    mathFieldElement.value.value = equation.value
+  }
 }
 
 function resetCurrentExample(): void {
@@ -283,15 +291,7 @@ function handleMathFieldInput(event: Event): void {
   activeExample.value = 'custom'
 }
 
-watch(
-  [equation, activeExample],
-  () => {
-    if (activeExample.value === 'custom' && mathFieldElement.value) {
-      mathFieldElement.value.value = equation.value
-    }
-  },
-  { immediate: true },
-)
+
 </script>
 
 <template>
@@ -371,7 +371,6 @@ watch(
             <math-field
               ref="mathFieldElement"
               class="math-input"
-              :value="equation"
               virtual-keyboard-mode="onfocus"
               @input="handleMathFieldInput"
             ></math-field>

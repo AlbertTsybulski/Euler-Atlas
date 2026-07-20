@@ -225,8 +225,41 @@ function insertImplicitMultiplication(source: string): string {
       while (end < source.length && /[A-Za-z0-9_]/.test(source[end])) {
         end += 1
       }
-      tokens.push({ kind: 'identifier', text: source.slice(index, end) })
+      const word = source.slice(index, end)
       index = end
+
+      if (ALLOWED_SYMBOLS.has(word) || ALLOWED_FUNCTIONS.has(word)) {
+        tokens.push({ kind: 'identifier', text: word })
+        continue
+      }
+
+      let wordIndex = 0
+      let splitOk = true
+      const splitTokens: Token[] = []
+      while (wordIndex < word.length) {
+        let matched = false
+        for (let len = word.length - wordIndex; len >= 1; len--) {
+          const candidate = word.slice(wordIndex, wordIndex + len)
+          if (ALLOWED_SYMBOLS.has(candidate) || ALLOWED_FUNCTIONS.has(candidate)) {
+            splitTokens.push({ kind: 'identifier', text: candidate })
+            wordIndex += len
+            matched = true
+            break
+          }
+        }
+        if (!matched) {
+          splitOk = false
+          break
+        }
+      }
+
+      if (splitOk && splitTokens.length > 0) {
+        for (const t of splitTokens) {
+          tokens.push(t)
+        }
+      } else {
+        tokens.push({ kind: 'identifier', text: word })
+      }
       continue
     }
 

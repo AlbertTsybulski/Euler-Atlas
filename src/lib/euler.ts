@@ -132,6 +132,28 @@ function transformLatexLikeInput(source: string): string {
         continue
       }
 
+      if (command === 'log') {
+        let tempIndex = index
+        while (tempIndex < trimmed.length && trimmed[tempIndex] === ' ') tempIndex++
+        if (trimmed[tempIndex] === '_') {
+          tempIndex++
+          while (tempIndex < trimmed.length && trimmed[tempIndex] === ' ') tempIndex++
+          if (trimmed[tempIndex] === '{') {
+            index = tempIndex
+            const baseGroup = readBalancedGroup(trimmed, index)
+            index = baseGroup.nextIndex
+            result += `log_BASE_${transformLatexLikeInput(baseGroup.content)}_ENDBASE_`
+          } else {
+            const baseChar = trimmed[tempIndex]
+            index = tempIndex + 1
+            result += `log_BASE_${baseChar}_ENDBASE_`
+          }
+        } else {
+          result += 'log'
+        }
+        continue
+      }
+
       if (ALLOWED_FUNCTIONS.has(command)) {
         result += command
         continue
@@ -184,7 +206,56 @@ function transformLatexLikeInput(source: string): string {
   return result.replace(/\s+/g, ' ').trim()
 }
 
+function resolveLogBases(source: string): string {
+  const marker = /log_BASE_(.*?)_ENDBASE_/g
+  let result = ''
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = marker.exec(source)) !== null) {
+    const base = match[1]
+    const afterMarker = match.index + match[0].length
+    result += source.slice(lastIndex, match.index)
+
+    let argStr = ''
+    let nextIndex = afterMarker
+    while (nextIndex < source.length && source[nextIndex] === ' ') nextIndex++
+
+    if (source[nextIndex] === '(') {
+      let depth = 1
+      let i = nextIndex + 1
+      while (i < source.length && depth > 0) {
+        if (source[i] === '(') depth++
+        else if (source[i] === ')') depth--
+        i++
+      }
+      argStr = source.slice(nextIndex + 1, i - 1)
+      nextIndex = i
+    } else {
+      const tokenMatch = source.slice(nextIndex).match(/^[A-Za-z0-9_.]+/)
+      if (tokenMatch) {
+        argStr = tokenMatch[0]
+        nextIndex += tokenMatch[0].length
+      }
+    }
+
+    result += `log(${argStr},${base})`
+    lastIndex = nextIndex
+    marker.lastIndex = nextIndex
+  }
+
+  result += source.slice(lastIndex)
+  return result
+}
+
 function insertImplicitMultiplication(source: string): string {
+  source = resolveLogBases(source)
+
+  source = source.replace(/log_\{([^}]+)\}/g, 'log_BASE_$1_ENDBASE_')
+  source = source.replace(/log_([A-Za-z0-9]+)/g, 'log_BASE_$1_ENDBASE_')
+
+  source = resolveLogBases(source)
+
   type Token =
     | { kind: 'number'; text: string }
     | { kind: 'identifier'; text: string }
@@ -286,21 +357,60 @@ function insertImplicitMultiplication(source: string): string {
   }
 
   const pieces: string[] = []
-  let previousToken: Token | undefined
+  let i = 0
 
-  for (const token of tokens) {
-    const previousIsValue =
-      previousToken?.kind === 'number' || previousToken?.kind === 'identifier' || previousToken?.kind === 'closeParen'
+  while (i < tokens.length) {
+    const token = tokens[i]
+    const previousToken = pieces.length > 0 ? tokens[i - 1] : undefined
+
+    const previousIsValue = (() => {
+      for (let k = i - 1; k >= 0; k--) {
+        const t = tokens[k]
+        if (t.kind === 'number' || t.kind === 'closeParen') return true
+        if (t.kind === 'identifier') return true
+        if (t.kind === 'operator') return false
+        if (t.kind === 'openParen' || t.kind === 'comma') return false
+      }
+      return false
+    })()
+    void previousToken
+
+    const isFunctionIdent = token.kind === 'identifier' && ALLOWED_FUNCTIONS.has(token.text)
+    const nextToken = tokens[i + 1]
+    const nextIsOpenParen = nextToken?.kind === 'openParen'
+
+    if (isFunctionIdent && !nextIsOpenParen && nextToken !== undefined) {
+      const nextIsValue =
+        nextToken.kind === 'number' ||
+        (nextToken.kind === 'identifier')
+
+      if (nextIsValue) {
+        if (previousIsValue) pieces.push('*')
+        pieces.push(token.text)
+        pieces.push('(')
+        pieces.push(nextToken.text)
+        pieces.push(')')
+        i += 2
+        continue
+      }
+    }
+
     const currentStartsValue = token.kind === 'number' || token.kind === 'identifier' || token.kind === 'openParen'
-
-    const previousIsFunctionName = previousToken?.kind === 'identifier' && ALLOWED_FUNCTIONS.has(previousToken.text)
+    const previousIsFunctionName = (() => {
+      for (let k = i - 1; k >= 0; k--) {
+        const t = tokens[k]
+        if (t.kind === 'identifier') return ALLOWED_FUNCTIONS.has(t.text)
+        break
+      }
+      return false
+    })()
 
     if (previousIsValue && currentStartsValue && !(token.kind === 'openParen' && previousIsFunctionName)) {
       pieces.push('*')
     }
 
     pieces.push(token.text)
-    previousToken = token
+    i++
   }
 
   return pieces.join('')

@@ -97,8 +97,10 @@ const renderedEquation = computed(() => renderMath(`\\frac{dy}{dx} = ${equationL
 
 const evaluatorResult = computed(() => {
   try {
+    const evaluator = createEvaluator(equation.value)
+    evaluator(x0.value, y0.value)
     return {
-      evaluator: createEvaluator(equation.value),
+      evaluator,
       error: '',
     }
   } catch (error) {
@@ -189,11 +191,15 @@ const gridLines = computed(() => {
 })
 
 const currentSlope = computed(() => {
-  if (!finalStep.value) {
-    return evaluatorResult.value.evaluator ? evaluatorResult.value.evaluator(x0.value, y0.value) : 0
-  }
+  try {
+    if (!finalStep.value) {
+      return evaluatorResult.value.evaluator ? evaluatorResult.value.evaluator(x0.value, y0.value) : 0
+    }
 
-  return finalStep.value.slope
+    return finalStep.value.slope
+  } catch {
+    return Number.NaN
+  }
 })
 
 const hasRenderableSteps = computed(() => !evaluatorResult.value.error && stepData.value.length > 0)

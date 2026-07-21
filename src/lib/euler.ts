@@ -462,12 +462,20 @@ export function createEvaluator(expression: string): (x: number, y: number) => n
   const compiled = parsed.compile()
 
   return (x: number, y: number) => {
-    const result = compiled.evaluate({ x, y, pi: Math.PI, e: Math.E })
-    if (typeof result !== 'number' || !Number.isFinite(result)) {
-      throw new Error('The expression produced a non-finite value.')
-    }
+    try {
+      const result = compiled.evaluate({ x, y, pi: Math.PI, e: Math.E })
+      if (typeof result !== 'number' || !Number.isFinite(result)) {
+        throw new Error('The expression produced a non-finite value at some point over the interval provided.')
+      }
 
-    return result
+      return result
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error
+      }
+
+      throw new Error('Could not evaluate the function.')
+    }
   }
 }
 

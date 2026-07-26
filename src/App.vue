@@ -190,17 +190,6 @@ const gridLines = computed(() => {
   return lines
 })
 
-const currentSlope = computed(() => {
-  try {
-    if (!finalStep.value) {
-      return evaluatorResult.value.evaluator ? evaluatorResult.value.evaluator(x0.value, y0.value) : 0
-    }
-
-    return finalStep.value.slope
-  } catch {
-    return Number.NaN
-  }
-})
 
 const hasRenderableSteps = computed(() => !evaluatorResult.value.error && stepData.value.length > 0)
 
@@ -322,12 +311,12 @@ function handleMathFieldInput(event: Event): void {
             <strong>{{ steps }}</strong>
           </div>
           <div class="stat">
-            <span>Final estimate</span>
-            <strong>{{ finalStep ? formatNumber(finalStep.nextY) : '—' }}</strong>
+            <span>Step size</span>
+            <strong>{{ formatNumber(stepSize) }}</strong>
           </div>
           <div class="stat">
-            <span>Start slope</span>
-            <strong>{{ formatNumber(currentSlope) }}</strong>
+            <span>Final estimate</span>
+            <strong>{{ finalStep ? formatNumber(finalStep.nextY) : '—' }}</strong>
           </div>
         </div>
       </section>

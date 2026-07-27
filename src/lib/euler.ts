@@ -613,9 +613,9 @@ export function buildSlopeField(
 
       segments.push({
         x1: centerX - dx * halfLength,
-        y1: centerY - dy * halfLength,
+        y1: centerY + dy * halfLength,
         x2: centerX + dx * halfLength,
-        y2: centerY + dy * halfLength,
+        y2: centerY - dy * halfLength,
       })
     }
   }

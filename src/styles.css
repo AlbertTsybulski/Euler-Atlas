@@ -426,11 +426,15 @@ button {
 }
 
 .plot-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
 }
 
 .plot-frame {
+  flex: 1;
+  min-height: 480px;
+  display: flex;
   overflow: hidden;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -443,7 +447,7 @@ button {
 .plot-frame svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .plot-backdrop {

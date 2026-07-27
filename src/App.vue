@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { renderToString } from 'katex'
 import {
   buildSlopeField,
@@ -139,27 +139,56 @@ const plotBounds = computed<Bounds>(() => {
   }
 })
 
+const plotFrameElement = ref<HTMLElement | null>(null)
+const plotFrameWidth = ref(1200)
+const plotFrameHeight = ref(760)
+
+const svgWidth = 1200
+const svgHeight = computed(() => {
+  if (plotFrameWidth.value > 0 && plotFrameHeight.value > 0) {
+    return Math.max(400, Math.round(1200 * (plotFrameHeight.value / plotFrameWidth.value)))
+  }
+  return 760
+})
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  if (plotFrameElement.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          plotFrameWidth.value = entry.contentRect.width
+          plotFrameHeight.value = entry.contentRect.height
+        }
+      }
+    })
+    resizeObserver.observe(plotFrameElement.value)
+  }
+})
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+})
+
 const slopeField = computed<FieldSegment[]>(() => {
   if (!evaluatorResult.value.evaluator) {
     return []
   }
 
   try {
-    return buildSlopeField(evaluatorResult.value.evaluator, plotBounds.value, svgWidth, svgHeight)
+    return buildSlopeField(evaluatorResult.value.evaluator, plotBounds.value, svgWidth, svgHeight.value)
   } catch {
     return []
   }
 })
-
-const svgWidth = 1200
-const svgHeight = 760
 
 function toSvgX(value: number): number {
   return ((value - plotBounds.value.xMin) / (plotBounds.value.xMax - plotBounds.value.xMin)) * svgWidth
 }
 
 function toSvgY(value: number): number {
-  return svgHeight - ((value - plotBounds.value.yMin) / (plotBounds.value.yMax - plotBounds.value.yMin)) * svgHeight
+  return svgHeight.value - ((value - plotBounds.value.yMin) / (plotBounds.value.yMax - plotBounds.value.yMin)) * svgHeight.value
 }
 
 const svgPolyline = computed(() =>
@@ -190,10 +219,9 @@ const gridLines = computed(() => {
   return lines
 })
 
-
 const hasRenderableSteps = computed(() => !evaluatorResult.value.error && stepData.value.length > 0)
 
-const plotKey = computed(() => `${selectedMethod.value}|${equation.value}|${x0.value}|${xFinal.value}|${y0.value}|${stepSize.value}|${steps.value}`)
+const plotKey = computed(() => `${selectedMethod.value}|${equation.value}|${x0.value}|${xFinal.value}|${y0.value}|${stepSize.value}|${steps.value}|${svgHeight.value}`)
 
 function syncStepSizeFromFinalX(): void {
   const span = xFinal.value - x0.value
@@ -450,8 +478,8 @@ function handleMathFieldInput(event: Event): void {
             </div>
           </div>
 
-          <div class="plot-frame">
-            <svg :key="plotKey" viewBox="0 0 1200 760" role="img" aria-label="Euler method plot">
+          <div ref="plotFrameElement" class="plot-frame">
+            <svg :key="plotKey" :viewBox="`0 0 1200 ${svgHeight}`" role="img" aria-label="Euler method plot">
               <defs>
                 <linearGradient id="pathGradient" x1="0%" x2="100%" y1="0%" y2="100%">
                   <stop offset="0%" stop-color="#7cf7d4" />
@@ -471,7 +499,7 @@ function handleMathFieldInput(event: Event): void {
                 </filter>
               </defs>
 
-              <rect x="0" y="0" width="1200" height="760" class="plot-backdrop"></rect>
+              <rect x="0" y="0" width="1200" :height="svgHeight" class="plot-backdrop"></rect>
 
               <g class="grid-lines">
                 <template v-for="line in gridLines" :key="`${line.orientation}-${line.position}-${line.label}`">
@@ -480,7 +508,7 @@ function handleMathFieldInput(event: Event): void {
                     :x1="line.position"
                     y1="0"
                     :x2="line.position"
-                    y2="760"
+                    :y2="svgHeight"
                   />
                   <line
                     v-else
@@ -493,7 +521,7 @@ function handleMathFieldInput(event: Event): void {
               </g>
 
               <g v-if="plotBounds.xMin <= 0 && plotBounds.xMax >= 0" class="axis-lines">
-                <line :x1="toSvgX(0)" y1="0" :x2="toSvgX(0)" y2="760" />
+                <line :x1="toSvgX(0)" y1="0" :x2="toSvgX(0)" :y2="svgHeight" />
               </g>
               <g v-if="plotBounds.yMin <= 0 && plotBounds.yMax >= 0" class="axis-lines">
                 <line x1="0" :y1="toSvgY(0)" x2="1200" :y2="toSvgY(0)" />
@@ -528,7 +556,7 @@ function handleMathFieldInput(event: Event): void {
                   v-for="line in gridLines.filter((item) => item.orientation === 'y')"
                   :key="`x-label-${line.position}`"
                   :x="line.position"
-                  y="738"
+                  :y="svgHeight - 22"
                 >
                   {{ line.label }}
                 </text>

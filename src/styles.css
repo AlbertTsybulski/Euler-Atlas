@@ -28,6 +28,12 @@ body,
   min-height: 100%;
 }
 
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   margin: 0;
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
@@ -50,7 +56,8 @@ button {
 .page-shell {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 .ambient {
@@ -85,6 +92,15 @@ button {
   gap: 20px;
 }
 
+.app-frame>*,
+.layout-grid>*,
+.controls-panel,
+.plot-panel,
+.table-panel,
+.card {
+  min-width: 0;
+}
+
 .card {
   background: var(--panel);
   border: 1px solid var(--panel-border);
@@ -112,6 +128,7 @@ button {
   font-size: clamp(2.35rem, 4.8vw, 5.2rem);
   line-height: 0.96;
   max-width: 12ch;
+  word-break: break-word;
 }
 
 .hero-copy .lede {
@@ -150,6 +167,7 @@ button {
   display: grid;
   align-content: space-between;
   min-height: 144px;
+  min-width: 0;
 }
 
 .stat span,
@@ -165,6 +183,7 @@ button {
 .footer-summary strong {
   font-size: clamp(1.35rem, 2vw, 2rem);
   font-family: 'Space Grotesk', sans-serif;
+  word-break: break-word;
 }
 
 .summary-card strong {
@@ -172,20 +191,21 @@ button {
   line-height: 1.4;
 }
 
-.metric-card > div,
-.metric-footer > div,
-.equation-summary > div {
+.metric-card>div,
+.metric-footer>div,
+.equation-summary>div {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
-.metric-card > div strong,
-.metric-footer > div strong,
-.equation-summary > div strong {
+.metric-card>div strong,
+.metric-footer>div strong,
+.equation-summary>div strong {
   margin-top: 2px;
 }
 
-.equation-summary > div:first-child {
+.equation-summary>div:first-child {
   gap: 10px;
 }
 
@@ -252,6 +272,7 @@ button {
     border-color 180ms ease,
     background 180ms ease;
   min-height: 96px;
+  min-width: 0;
 }
 
 .preset-card:hover,
@@ -277,6 +298,8 @@ button {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.05rem;
   line-height: 1.25;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .custom-card .preset-math {
@@ -308,6 +331,7 @@ button {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
+  min-width: 0;
 }
 
 .equation-summary {
@@ -325,6 +349,8 @@ button {
 .equation-render {
   display: block;
   font-size: 1.02rem;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .equation-render .katex {
@@ -337,6 +363,7 @@ button {
 
 .math-input {
   width: 100%;
+  max-width: 100%;
   min-height: 72px;
   padding: 14px 16px;
   border-radius: 18px;
@@ -346,6 +373,7 @@ button {
   font-size: 1.15rem;
   line-height: 1.4;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow-x: auto;
 }
 
 .math-input:focus-within {
@@ -402,16 +430,18 @@ button {
   padding: 18px;
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
-.summary-card > div,
-.footer-summary > div,
-.equation-summary > div {
+.summary-card>div,
+.footer-summary>div,
+.equation-summary>div {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
-.equation-summary > div:first-child {
+.equation-summary>div:first-child {
   gap: 10px;
 }
 
@@ -419,6 +449,8 @@ button {
   display: block;
   font-size: 1.02rem;
   line-height: 1.45;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .equation-render .katex {
@@ -507,12 +539,11 @@ button {
   font-size: 18px;
 }
 
-.axis-labels text:nth-child(n + 8) {
-  text-anchor: start;
-}
-
 .table-wrap {
-  overflow: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  min-width: 0;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(4, 8, 20, 0.38);
@@ -521,7 +552,7 @@ button {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 860px;
+  min-width: 720px;
   font-size: 0.96rem;
 }
 
@@ -603,6 +634,7 @@ tbody tr.latest {
 }
 
 @media (max-width: 1180px) {
+
   .hero,
   .layout-grid {
     grid-template-columns: 1fr;
@@ -626,16 +658,125 @@ tbody tr.latest {
     padding: 18px;
   }
 
-  .hero-stats,
-  .preset-grid,
-  .method-grid,
-  .field-grid,
-  .footer-summary {
-    grid-template-columns: 1fr;
+  .hero-copy h1 {
+    font-size: clamp(1.75rem, 6.5vw, 3.2rem);
+    max-width: 100%;
   }
 
-  .hero-copy h1 {
-    max-width: 100%;
+  .hero-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat {
+    padding: 12px 10px;
+    min-height: auto;
+  }
+
+  .stat span {
+    font-size: 0.78rem;
+  }
+
+  .stat strong {
+    font-size: clamp(1rem, 3.8vw, 1.4rem);
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .preset-card {
+    padding: 12px 10px;
+    min-height: 80px;
+  }
+
+  .preset-label {
+    font-size: 0.76rem;
+  }
+
+  .preset-math {
+    font-size: 0.95rem;
+  }
+
+  .method-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .method-btn {
+    padding: 8px 4px;
+    font-size: 0.82rem;
+  }
+
+  .field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .field input {
+    font-size: 16px;
+    min-height: 46px;
+    padding: 0 12px;
+  }
+
+  .footer-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .footer-summary span {
+    font-size: 0.78rem;
+  }
+
+  .footer-summary strong {
+    font-size: clamp(0.95rem, 3.5vw, 1.2rem);
+  }
+
+  .plot-frame {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-frame {
+    width: calc(100vw - 16px);
+    padding-bottom: 24px;
+  }
+
+  .hero,
+  .controls-panel,
+  .plot-panel,
+  .table-panel {
+    padding: 14px;
+    border-radius: var(--radius-lg);
+  }
+
+  .panel-header h2 {
+    font-size: 1.3rem;
+  }
+
+  table {
+    min-width: 540px;
+    font-size: 0.88rem;
+  }
+
+  thead th,
+  tbody td {
+    padding: 10px 10px;
+  }
+
+  .stat {
+    padding: 10px 8px;
+  }
+
+  .stat span {
+    font-size: 0.72rem;
+  }
+
+  .stat strong {
+    font-size: 1.05rem;
   }
 }
 

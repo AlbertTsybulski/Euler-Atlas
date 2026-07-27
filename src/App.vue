@@ -557,6 +557,8 @@ function handleMathFieldInput(event: Event): void {
                   :key="`x-label-${line.position}`"
                   :x="line.position"
                   :y="svgHeight - 22"
+                  :text-anchor="line.position < 60 ? 'start' : line.position > 1140 ? 'end' : 'middle'"
+                  :dx="line.position < 60 ? 6 : line.position > 1140 ? -6 : 0"
                 >
                   {{ line.label }}
                 </text>
